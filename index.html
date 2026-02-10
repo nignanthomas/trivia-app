@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<title>Trivia</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<style>
+		/* Use Helvetica, fallback to Arial, then sans-serif */
+		body {
+			margin: 0;
+			padding: 0;
+			font-family: 'Helvetica', Arial, sans-serif;
+			background: #faf8f0;
+			/* Light, neutral background */
+			color: #333;
+		}
+
+		main {
+			max-width: 900px;
+			margin: 1rem auto;
+			padding: 1rem;
+		}
+
+		/* Instructions container (shown only on first load) */
+		#instructionsContainer {
+			text-align: center;
+			background: #fcecc0;
+			/* Light, happy color for instructions */
+			padding: 1rem;
+			border-radius: 8px;
+			margin-bottom: 1rem;
+		}
+
+		.upload-section {
+			margin-bottom: 1rem;
+		}
+
+		/* Hide the trivia container by default until user loads file */
+		#triviaContainer {
+			display: none;
+			background: #ffffff;
+			/* White background for main trivia area */
+			border-radius: 8px;
+			padding: 1rem;
+		}
+
+		/* Section header: title on left, nav buttons on right */
+		.section-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 0.5rem;
+		}
+
+		.section-title {
+			font-size: 1.3rem;
+			font-weight: bold;
+		}
+
+		.section-description {
+			font-size: 0.875rem;
+			font-style: italic;
+			margin-bottom: 1rem;
+		}
+
+		.nav-buttons {
+			display: flex;
+			gap: 0.5rem;
+		}
+
+		.action-button {
+			background: #fdecd2;
+			/* Light pastel accent */
+			color: #333;
+			border: none;
+			padding: 0.5rem 1rem;
+			cursor: pointer;
+			font-size: 0.9rem;
+			border-radius: 6px;
+			transition: background 0.3s;
+		}
+
+		.clear-button {
+			margin-left: 0.5rem;
+		}
+
+		.action-button:hover:enabled {
+			background: #fad7a0;
+			/* Slightly darker on hover */
+		}
+
+		.action-button:disabled {
+			opacity: 0.6;
+			cursor: not-allowed;
+		}
+
+		/* Question numbers in a single horizontal line, scrollable */
+		.question-numbers {
+			display: flex;
+			flex-wrap: wrap;
+			overflow-x: auto;
+			gap: 0.5rem;
+			margin-bottom: 1rem;
+			padding: 0.5rem;
+			border: 1px solid #ccc;
+			border-radius: 6px;
+			background: #f9dfc7;
+		}
+
+		.question-number {
+			flex: 0 0 auto;
+			background: #f5f5f5;
+			color: #333;
+			border: none;
+			padding: 0.5rem 1rem;
+			cursor: pointer;
+			font-size: 0.9rem;
+			border-radius: 6px;
+			transition: background 0.3s;
+			width: 100px;
+			text-align: center;
+		}
+
+		.question-number:hover:not(:disabled) {
+			background: #eaeaea;
+		}
+
+		.question-number:disabled {
+			cursor: not-allowed;
+			opacity: 0.7;
+		}
+
+		/* Color coding for which team answered */
+		.answered-a {
+			background: #DA2C43 !important;
+			/* Greenish pop */
+			color: white !important;
+		}
+
+		.answered-b {
+			background: #0047AB !important;
+			/* Reddish/pink pop */
+			color: white !important;
+		}
+
+		.answered-none {
+			background: #d3d3d3 !important;
+			/* Neutral gray */
+			color: #333 !important;
+		}
+
+		.unopened {
+			background: #f5f5f5 !important;
+			/* Default neutral */
+			color: #333 !important;
+		}
+
+		/* Container to display the currently selected question */
+		.current-question-container {
+			display: none;
+			/* Hidden until a question is selected */
+			margin-bottom: 2rem;
+			padding: 1rem;
+			background: #fff;
+			border-radius: 6px;
+		}
+
+		.current-question-container h2 {
+			margin: 0 0 0.5rem;
+		}
+
+		.buttons-row {
+			margin-top: 1rem;
+			display: flex;
+			gap: 0.5rem;
+		}
+
+		.answer {
+			margin-top: 0.5rem;
+			display: none;
+			background: #faf8f0;
+			padding: 0.5rem;
+			border-left: 4px solid #16a085;
+			border-radius: 4px;
+		}
+
+		.scoreboard {
+			margin-top: 1rem;
+			padding-top: 1rem;
+			display: none;
+			background: #fff;
+			border-radius: 6px;
+			padding: 1rem;
+		}
+
+		.scoreboard h3 {
+			margin-top: 0;
+		}
+
+		.scoreboard ul {
+			list-style: none;
+			padding: 0;
+		}
+
+		.scoreboard li {
+			margin: 0.25rem 0;
+		}
+
+		/* Final scoreboard container */
+		#finalScoreboardContainer {
+			display: none;
+			margin-top: 2rem;
+			background: #ffffff;
+			border-radius: 8px;
+			padding: 1rem;
+		}
+
+		.section-breakdown {
+			background: #faf8f0;
+			margin: 1rem 0;
+			padding: 1rem;
+			border-radius: 6px;
+		}
+
+		.section-breakdown h3 {
+			margin-top: 0;
+		}
+
+		.return-button {
+			display: inline-block;
+			/* margin-top: 1rem; */
+		}
+
+		.final-buttons {
+			display: flex;
+			gap: 0.5rem;
+			margin-top: 1rem;
+		}
+
+		.points-control {
+			margin-top: 0.5rem;
+			/* Add top margin */
+		}
+
+		.points-display {
+			margin-left: 1rem;
+			/* Add left margin */
+			margin-right: 1rem;
+			/* Add right margin */
+		}
+
+		pre {
+			white-space: pre-line;
+			/* Wrap text */
+			word-wrap: break-word;
+			/* Break long words */
+		}
+
+		.upload-button {
+			display: inline-block;
+			background: #D3D3D3;
+			color: #333;
+			border: none;
+			padding: 0.5rem 1rem;
+			cursor: pointer;
+			font-size: 0.9rem;
+			border-radius: 6px;
+			transition: background 0.3s;
+			text-align: center;
+		}
+
+		.upload-button:hover {
+			background: #B0B0B0;
+		}
+
+		/* Breakpoints for tablets and below */
+		@media (max-width: 768px) {
+			main {
+				width: 100%;
+			}
+
+			.section-header {
+				flex-direction: column;
+				align-items: flex-start;
+			}
+
+			.nav-buttons {
+				margin-top: 0.5rem;
+			}
+
+			.question-numbers {
+				max-height: 250px;
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<main>
+		<!-- Instructions (shown only on first load) -->
+		<div id="instructionsContainer">
+			<div class="upload-section">
+				<h2>Upload Trivia File</h2>
+				<p>
+					Each new section starts with a line beginning with <code>#</code>.
+					Everything after the "#" on that line becomes the section's title.
+					Everything after the "##" on that line becomes the section's description.
+					For questions, any parts (number, question, answer) can be omitted.
+					Also note that the question/answer separator can be a colon
+					(<code>:</code>) or a question mark (<code>?</code>).
+				</p>
+				<pre style="text-align: left; display: inline-block">
+        # Section 1
+        ## Section description
+        1. Possibly a question?: Possibly an answer
+        2. Another question:
+        Just a question with no number or answer
+        3 Another question? Some answer
+
+        # Another Title
+        No number or punctuation
+        . No number, only question? Another answer
+        3. Maybe no answer
+    </pre>
+				<br />
+				<label for="fileInput" class="upload-button">Upload File</label>
+				<input type="file" id="fileInput" accept=".txt" style="display: none;" />
+				<button id="textInputButton" class="upload-button">Text Input</button>
+			</div>
+		</div>
+
+		<!-- Modal for text input -->
+		<div id="textInputModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center;">
+			<div style="background: white; padding: 1.5rem; border-radius: 8px; text-align: center; max-width: 400px; width: 90%;">
+				<h3>Paste Your Questions</h3>
+				<textarea id="textInputArea" rows="10" style="width: 100%; margin-bottom: 1rem;"></textarea>
+				<div>
+					<button id="continueTextInputBtn" class="action-button" style="margin-right: 0.5rem;">Continue</button>
+					<button id="cancelTextInputBtn" class="action-button">Cancel</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Trivia container (hidden until file is loaded) -->
+		<div id="triviaContainer"></div>
+
+		<!-- Final scoreboard for all sections -->
+		<div id="finalScoreboardContainer">
+			<h2>Final Trivia Results</h2>
+			<div id="finalScoreboard"></div>
+			<div class="final-buttons">
+				<button id="returnToSectionsBtn" class="action-button return-button">
+					Return to Trivia
+				</button>
+				<button id="clearProgressFinalBtn" class="action-button clear-button">
+					Reset
+				</button>
+			</div>
+		</div>
+
+		<!-- Confirmation Modal -->
+		<div id="confirmationModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center;">
+			<div style="background: white; padding: 1.5rem; border-radius: 8px; text-align: center; max-width: 400px; width: 90%;">
+				<h3>Lieutenant Yaya, tu es sûr de toi?</h3>
+				<img src="https://github.com/nignanthomas/crocos_pictures/blob/main/lieutenant_yaya_tu_es_sur.png?raw=true" alt="yaya" height="auto" width="100%" />
+				<p>You're about to reset your questionnaire and score. This action cannot be undone.</p>
+				<div style="margin-top: 1rem;">
+					<button id="confirmResetBtn" class="action-button" style="margin-right: 0.5rem;">Yes, Reset</button>
+					<button id="cancelResetBtn" class="action-button">Cancel</button>
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<script>
+		let sections = []
+		let currentSectionIndex = 0
+		const fileInput = document.getElementById('fileInput')
+		const triviaContainer = document.getElementById('triviaContainer')
+		const instructionsContainer = document.getElementById(
+			'instructionsContainer'
+		)
+		const finalScoreboardContainer = document.getElementById(
+			'finalScoreboardContainer'
+		)
+		const finalScoreboard = document.getElementById('finalScoreboard')
+		const returnToSectionsBtn = document.getElementById('returnToSectionsBtn')
+		const clearProgressFinalBtn = document.getElementById('clearProgressFinalBtn')
+
+		fileInput.addEventListener('change', handleFileUpload)
+		returnToSectionsBtn.addEventListener('click', () => {
+			// Hide final scoreboard and show the trivia container again
+			finalScoreboardContainer.style.display = 'none'
+			triviaContainer.style.display = 'block'
+			currentSectionIndex = 0; // Reset currentSectionIndex
+			showSection(currentSectionIndex)
+		})
+		clearProgressFinalBtn.addEventListener('click', clearProgress)
+
+		// Load sections from localStorage if available
+		window.addEventListener('load', () => {
+			const savedSections = localStorage.getItem('triviaSections')
+			if (savedSections) {
+				sections = JSON.parse(savedSections)
+				currentSectionIndex = parseInt(localStorage.getItem('currentSectionIndex'), 10) || 0
+				instructionsContainer.style.display = 'none'
+				triviaContainer.style.display = 'block'
+				showSection(currentSectionIndex)
+			}
+		})
+
+		function handleFileUpload() {
+			const file = fileInput.files[0]
+			if (!file) return
+
+			const reader = new FileReader()
+			reader.onload = function (e) {
+				const text = e.target.result
+				parseFile(text)
+				if (sections.length > 0) {
+					currentSectionIndex = 0
+					instructionsContainer.style.display = 'none'
+					triviaContainer.style.display = 'block'
+					showSection(currentSectionIndex)
+					saveProgress()
+				} else {
+					alert('No valid sections found in the file.')
+				}
+			}
+			reader.readAsText(file)
+		}
+
+		/**
+		 * Parse the file content into sections.
+		 */
+		function parseFile(fileContent) {
+			sections = []
+			const lines = fileContent.split(/\r?\n/)
+
+			let currentSection = null
+
+			lines.forEach(line => {
+				const trimmed = line.trim()
+				// Skip blank lines
+				if (!trimmed) return
+
+				// Check if line starts with "##" for description
+				if (trimmed.startsWith('##')) {
+					if (currentSection) {
+						currentSection.description = trimmed.substring(2).trim()
+					}
+				} else if (trimmed.startsWith('#')) {
+					const sectionTitle = trimmed.substring(1).trim()
+					currentSection = {
+						title: sectionTitle || 'Untitled Section',
+						description: '',
+						questions: [],
+					}
+					sections.push(currentSection)
+				} else if (currentSection) {
+					const parsed = parseTriviaLine(trimmed)
+					currentSection.questions.push(parsed)
+				}
+			})
+		}
+
+		/**
+		 * Parse a single line of trivia into an object with optional number, question, and answer.
+		 * We look first for a colon (:) as the separator. If none is found, we look for a question mark (?).
+		 * If neither is found, the entire line is considered the question, with no answer.
+		 */
+		function parseTriviaLine(line) {
+			let questionPart = ''
+			let answerPart = ''
+
+			// Try colon first
+			const colonIndex = line.indexOf(':')
+			if (colonIndex >= 0) {
+				questionPart = line.slice(0, colonIndex).trim()
+				answerPart = line.slice(colonIndex + 1).trim()
+			} else {
+				// If no colon, try question mark
+				const qMarkIndex = line.indexOf('?')
+				if (qMarkIndex >= 0) {
+					questionPart = line.slice(0, qMarkIndex).trim()
+					answerPart = line.slice(qMarkIndex + 1).trim()
+				} else {
+					questionPart = line.trim()
+					answerPart = ''
+				}
+			}
+
+			let number = ''
+			let question = questionPart
+
+			// Attempt to parse out a leading number
+			const numRegex = /^(\d+)([^\w]+)(.*)$/
+			let match = questionPart.match(numRegex)
+			if (match) {
+				number = match[1].trim()
+				question = match[3].trim()
+			} else {
+				// Another attempt: maybe the line starts with digits but no punctuation
+				const numRegexNoPunc = /^(\d+)\s+(.*)$/
+				match = questionPart.match(numRegexNoPunc)
+				if (match) {
+					number = match[1].trim()
+					question = match[2].trim()
+				}
+			}
+
+			return {
+				number,
+				question,
+				answer: answerPart,
+				answeredBy: null,
+			}
+		}
+
+		/**
+		 * Utility to get a snippet of up to `maxWords` from a text.
+		 */
+		function getSnippet(text, maxWords = 5) {
+			const trimmed = text.trim()
+			if (!trimmed) return '[No content]'
+			const words = trimmed.split(/\s+/)
+			if (words.length <= maxWords) {
+				return trimmed
+			}
+			return words.slice(0, maxWords).join(' ') + '...'
+		}
+
+		function showSection(index) {
+			const section = sections[index]
+			if (!section) return
+
+			// Clear the container
+			triviaContainer.innerHTML = ''
+
+			// SECTION HEADER (title + navigation)
+			const sectionHeader = document.createElement('div')
+			sectionHeader.classList.add('section-header')
+
+			// Title
+			const sectionTitle = document.createElement('div')
+			sectionTitle.classList.add('section-title')
+			sectionTitle.textContent = section.title
+
+			// Description
+			const sectionDescription = document.createElement('div')
+			sectionDescription.classList.add('section-description')
+			sectionDescription.textContent = section.description
+
+			// Nav buttons on the right
+			const navButtons = document.createElement('div')
+			navButtons.classList.add('nav-buttons')
+
+			// Previous Section button
+			if (index > 0) {
+				const prevSectionBtn = document.createElement('button')
+				prevSectionBtn.classList.add('action-button')
+				prevSectionBtn.textContent = 'Previous Section'
+				prevSectionBtn.addEventListener('click', () => {
+					currentSectionIndex--
+					showSection(currentSectionIndex)
+				})
+				navButtons.appendChild(prevSectionBtn)
+			}
+
+			// Next Section / Finish button
+			const nextSectionBtn = document.createElement('button')
+			nextSectionBtn.classList.add('action-button')
+			if (index < sections.length - 1) {
+				nextSectionBtn.textContent = 'Next Section'
+			} else {
+				nextSectionBtn.textContent = 'Final Scores'
+			}
+			nextSectionBtn.addEventListener('click', () => {
+				if (index < sections.length - 1) {
+					currentSectionIndex++
+					showSection(currentSectionIndex)
+				} else {
+					showFinalScoreboard()
+				}
+			})
+			navButtons.appendChild(nextSectionBtn)
+
+			sectionHeader.appendChild(sectionTitle)
+			sectionHeader.appendChild(navButtons)
+
+			// Append section header and description
+			triviaContainer.appendChild(sectionHeader)
+			triviaContainer.appendChild(sectionDescription)
+
+			// QUESTION BUTTONS
+			const questionNumbersDiv = document.createElement('div')
+			questionNumbersDiv.classList.add('question-numbers')
+
+			// CURRENT QUESTION CONTAINER
+			const currentQuestionContainer = document.createElement('div')
+			currentQuestionContainer.classList.add('current-question-container')
+
+			const currentQuestionTitle = document.createElement('h2')
+			const revealAnswerBtn = document.createElement('button')
+			revealAnswerBtn.textContent = 'Reveal Answer'
+			revealAnswerBtn.classList.add('action-button')
+			const currentAnswerDiv = document.createElement('div')
+			currentAnswerDiv.classList.add('answer')
+
+			// Points control buttons
+			const pointsControlDiv = document.createElement('div')
+			pointsControlDiv.classList.add('points-control')
+
+			const decrementBtn = document.createElement('button')
+			decrementBtn.textContent = '-'
+			decrementBtn.classList.add('action-button')
+
+			const incrementBtn = document.createElement('button')
+			incrementBtn.textContent = '+'
+			incrementBtn.classList.add('action-button')
+
+			const pointsDisplay = document.createElement('span')
+			pointsDisplay.classList.add('points-display')
+			pointsDisplay.textContent = '1' // Default points
+
+			pointsControlDiv.appendChild(decrementBtn)
+			pointsControlDiv.appendChild(pointsDisplay)
+			pointsControlDiv.appendChild(incrementBtn)
+
+			// Buttons row for marking answers
+			const buttonsRow = document.createElement('div')
+			buttonsRow.classList.add('buttons-row')
+
+			const teamAButton = document.createElement('button')
+			teamAButton.textContent = 'Team A'
+			teamAButton.classList.add('action-button')
+			teamAButton.classList.add('answered-a')
+
+			const teamBButton = document.createElement('button')
+			teamBButton.textContent = 'Team B'
+			teamBButton.classList.add('action-button')
+			teamBButton.classList.add('answered-b')
+
+			const noneButton = document.createElement('button')
+			noneButton.textContent = 'None'
+			noneButton.classList.add('action-button')
+			noneButton.classList.add('answered-none')
+
+			const unopenedButton = document.createElement('button')
+			unopenedButton.textContent = 'Unopened'
+			unopenedButton.classList.add('action-button')
+
+			buttonsRow.appendChild(teamAButton)
+			buttonsRow.appendChild(teamBButton)
+			buttonsRow.appendChild(noneButton)
+			buttonsRow.appendChild(unopenedButton)
+
+			currentQuestionContainer.appendChild(currentQuestionTitle)
+			currentQuestionContainer.appendChild(revealAnswerBtn)
+			currentQuestionContainer.appendChild(currentAnswerDiv)
+			currentQuestionContainer.appendChild(pointsControlDiv) // Append the new div
+			currentQuestionContainer.appendChild(buttonsRow)
+
+			// SCOREBOARD
+			const scoreboard = document.createElement('div')
+			scoreboard.classList.add('scoreboard')
+			const scoreboardTitle = document.createElement('h3')
+			scoreboardTitle.textContent = 'Scoreboard / Section Results'
+			scoreboard.appendChild(scoreboardTitle)
+
+			const scoreboardList = document.createElement('ul')
+			scoreboard.appendChild(scoreboardList)
+
+			// FINISH SECTION BUTTON
+			const finishSectionBtn = document.createElement('button')
+			finishSectionBtn.classList.add('action-button')
+			finishSectionBtn.textContent = 'Section Scores'
+			finishSectionBtn.addEventListener('click', () => {
+				scoreboardList.innerHTML = ''
+				let teamAScore = 0
+				let teamBScore = 0
+
+				section.questions.forEach(q => {
+					const li = document.createElement('li')
+					const questionSnippet = getSnippet(q.question, 5)
+					const answerSnippet = getSnippet(q.answer, 5)
+					const displayLabel = `"${questionSnippet}" / "${answerSnippet}"`
+
+					let answeredString = 'Unopened'
+					if (q.answeredBy === 'A') {
+						answeredString = `Team A (${q.points || 1} points)`
+						teamAScore += q.points || 1
+					} else if (q.answeredBy === 'B') {
+						answeredString = `Team B (${q.points || 1} points)`
+						teamBScore += q.points || 1
+					} else if (q.answeredBy === 'None') {
+						answeredString = 'None'
+					}
+					li.innerHTML = `${displayLabel} => <strong>${answeredString}</strong>`
+					scoreboardList.appendChild(li)
+				})
+
+				const liSummary = document.createElement('li')
+				liSummary.style.marginTop = '1rem'
+				liSummary.textContent = `Team A Score: ${teamAScore} | Team B Score: ${teamBScore}`
+				scoreboardList.appendChild(liSummary)
+
+				scoreboard.style.display = 'block'
+			})
+
+			// CLEAR PROGRESS BUTTON
+			const clearProgressBtn = document.createElement('button')
+			clearProgressBtn.classList.add('action-button')
+			clearProgressBtn.classList.add('clear-button')
+			clearProgressBtn.textContent = 'Reset'
+			clearProgressBtn.addEventListener('click', clearProgress)
+
+			// Append buttons to the container
+			const buttonContainer = document.createElement('div')
+
+			// Build question number buttons
+			let currentQuestionIndex = -1
+			section.questions.forEach((q, qIndex) => {
+				let label =
+					q.number && q.number.trim() !== ''
+						? `Q${q.number}`
+						: `Q${qIndex + 1}`
+
+				const btn = document.createElement('button')
+				btn.classList.add('question-number')
+				btn.dataset.index = qIndex
+				btn.textContent = label
+				applyAnsweredByClass(btn, q.answeredBy)
+
+				btn.addEventListener('click', () => {
+					currentQuestionIndex = qIndex
+					const questionObj = section.questions[qIndex]
+
+					currentQuestionContainer.style.display = 'block'
+
+					const questionText =
+						questionObj.question.trim() !== ''
+							? questionObj.question
+							: '[No Question]'
+					currentQuestionTitle.textContent = `Question ${qIndex + 1} - ${questionText}`
+
+					const trimmedAnswer = questionObj.answer.trim()
+					if (trimmedAnswer) {
+						revealAnswerBtn.disabled = false
+					} else {
+						revealAnswerBtn.disabled = true
+					}
+
+					currentAnswerDiv.style.display = 'none'
+					currentAnswerDiv.textContent = trimmedAnswer || '[No Answer]'
+					revealAnswerBtn.style.display = 'inline-block'
+
+					pointsDisplay.textContent = questionObj.points || '1'
+				})
+
+				questionNumbersDiv.appendChild(btn)
+			})
+
+			// Reveal answer
+			revealAnswerBtn.addEventListener('click', () => {
+				currentAnswerDiv.style.display = 'block'
+				revealAnswerBtn.style.display = 'none'
+			})
+
+			// Mark question as answered
+			teamAButton.addEventListener('click', () => markAnswer('A'))
+			teamBButton.addEventListener('click', () => markAnswer('B'))
+			noneButton.addEventListener('click', () => markAnswer('None'))
+			unopenedButton.addEventListener('click', () => markAnswer(null))
+
+			function markAnswer(team) {
+				if (currentQuestionIndex < 0) return
+				const questionObj = section.questions[currentQuestionIndex]
+				questionObj.answeredBy = team
+				questionObj.points = parseInt(pointsDisplay.textContent, 10) || 1
+
+				const btn = questionNumbersDiv.querySelector(
+					`.question-number[data-index='${currentQuestionIndex}']`
+				)
+				if (btn) {
+					applyAnsweredByClass(btn, team)
+				}
+
+				currentQuestionContainer.style.display = 'none'
+				currentQuestionIndex = -1
+				saveProgress()
+			}
+
+			function applyAnsweredByClass(btn, answeredBy) {
+				btn.classList.remove(
+					'answered-a',
+					'answered-b',
+					'answered-none',
+					'unopened'
+				)
+				switch (answeredBy) {
+					case 'A':
+						btn.classList.add('answered-a')
+						break
+					case 'B':
+						btn.classList.add('answered-b')
+						break
+					case 'None':
+						btn.classList.add('answered-none')
+						break
+					default:
+						btn.classList.add('unopened')
+				}
+			}
+
+			// Increment and decrement points
+			incrementBtn.addEventListener('click', () => {
+				pointsDisplay.textContent = parseInt(pointsDisplay.textContent, 10) + 1
+			})
+
+			decrementBtn.addEventListener('click', () => {
+				const currentPoints = parseInt(pointsDisplay.textContent, 10)
+				if (currentPoints > 1) {
+					pointsDisplay.textContent = currentPoints - 1
+				}
+			})
+
+			// Append everything in order
+			triviaContainer.appendChild(sectionHeader)
+			triviaContainer.appendChild(sectionDescription)
+			triviaContainer.appendChild(questionNumbersDiv)
+			triviaContainer.appendChild(currentQuestionContainer)
+			triviaContainer.appendChild(finishSectionBtn)
+			triviaContainer.appendChild(clearProgressBtn)
+			triviaContainer.appendChild(scoreboard)
+		}
+
+		/**
+		 * Show final scoreboard across all sections, with detailed points from each section.
+		 * Then pop confetti from the bottom like fireworks.
+		 */
+		function showFinalScoreboard() {
+			finalScoreboard.innerHTML = '';
+			finalScoreboardContainer.style.display = 'block';
+
+			let totalTeamA = 0;
+			let totalTeamB = 0;
+
+			sections.forEach(sec => {
+				const sectionDiv = document.createElement('div');
+				sectionDiv.classList.add('section-breakdown');
+
+				const sectionHeader = document.createElement('h3');
+				sectionHeader.textContent = `Section: ${sec.title}`;
+				sectionDiv.appendChild(sectionHeader);
+
+				let sectionTeamA = 0;
+				let sectionTeamB = 0;
+
+				const list = document.createElement('ul');
+				sec.questions.forEach(q => {
+					const li = document.createElement('li');
+					const questionSnippet = getSnippet(q.question, 5);
+					const answerSnippet = getSnippet(q.answer, 5);
+					const displayLabel = `"${questionSnippet}" / "${answerSnippet}"`;
+
+					let answeredString = 'Unopened';
+					if (q.answeredBy === 'A') {
+						answeredString = `Team A (${q.points || 1} points)`;
+						sectionTeamA += q.points || 1;
+					} else if (q.answeredBy === 'B') {
+						answeredString = `Team B (${q.points || 1} points)`;
+						sectionTeamB += q.points || 1;
+					} else if (q.answeredBy === 'None') {
+						answeredString = 'None';
+					}
+
+					li.textContent = `${displayLabel} => ${answeredString}`;
+					list.appendChild(li);
+				});
+
+				sectionDiv.appendChild(list);
+
+				const summaryP = document.createElement('p');
+				summaryP.textContent = `Section Score => Team A: ${sectionTeamA}, Team B: ${sectionTeamB}`;
+				sectionDiv.appendChild(summaryP);
+
+				totalTeamA += sectionTeamA;
+				totalTeamB += sectionTeamB;
+
+				finalScoreboard.appendChild(sectionDiv);
+			});
+
+			const overallP = document.createElement('p');
+			overallP.style.fontWeight = 'bold';
+			overallP.textContent = `Team A: ${totalTeamA} | Team B: ${totalTeamB}`;
+			finalScoreboard.appendChild(overallP);
+
+			const winnerP = document.createElement('p');
+			winnerP.style.fontWeight = 'bold';
+			winnerP.style.fontSize = '32px';
+			if (totalTeamA > totalTeamB) {
+				winnerP.textContent = 'Team A wins!';
+			} else if (totalTeamB > totalTeamA) {
+				winnerP.textContent = 'Team B wins!';
+			} else {
+				winnerP.textContent = 'It\'s a tie!';
+			}
+
+			// Add an image above the winnerP
+			const winnerImage = document.createElement('img');
+			winnerImage.src = 'https://github.com/nignanthomas/crocos_pictures/blob/main/president_bobo.png?raw=true';
+			winnerImage.alt = 'Winner Celebration';
+			winnerImage.style.height = '300px'; // Adjust the width as needed
+			winnerImage.style.marginBottom = '1rem';
+
+			// Hide main trivia container and show final scoreboard
+			triviaContainer.innerHTML = '';
+			triviaContainer.appendChild(winnerImage);
+			triviaContainer.appendChild(winnerP);
+			triviaContainer.appendChild(overallP);
+
+			// Pop confetti from bottom
+			// startConfetti();
+		}
+
+		/**
+		 * Confetti effect from bottom, like fireworks, for 5 seconds.
+		 */
+		function startConfetti() {
+			const canvas = document.createElement('canvas')
+			canvas.style.position = 'fixed'
+			canvas.style.top = '0'
+			canvas.style.left = '0'
+			canvas.style.pointerEvents = 'none'
+			canvas.style.zIndex = '9999'
+			document.body.appendChild(canvas)
+
+			const ctx = canvas.getContext('2d')
+			let W = window.innerWidth
+			let H = window.innerHeight
+			canvas.width = W
+			canvas.height = H
+
+			const confettiCount = 150
+			const confetti = []
+
+			// Spawn confetti near bottom
+			for (let i = 0; i < confettiCount; i++) {
+				confetti.push({
+					x: Math.random() * W, // anywhere along width
+					y: H + Math.random() * 100, // start just below bottom
+					r: Math.random() * 6 + 4, // radius
+					d: Math.random() * 200 + 100, // density or speed factor
+					color: `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(
+						Math.random() * 256
+					)}, ${Math.floor(Math.random() * 256)})`,
+				})
+			}
+
+			function drawConfetti() {
+				ctx.clearRect(0, 0, W, H)
+				confetti.forEach(c => {
+					ctx.beginPath()
+					ctx.fillStyle = c.color
+					ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2, false)
+					ctx.fill()
+				})
+				updateConfetti()
+			}
+
+			function updateConfetti() {
+				confetti.forEach((c, i) => {
+					// Move upwards
+					c.y -= (Math.cos(c.d) + 2 + c.r / 2) * 0.5
+					// Slight horizontal drift
+					c.x += Math.sin(0.01 * c.d)
+
+					// If it goes off the top, respawn at bottom
+					if (c.y < -10) {
+						confetti[i] = {
+							x: Math.random() * W,
+							y: H + 10,
+							r: c.r,
+							d: c.d,
+							color: c.color,
+						}
+					}
+				})
+			}
+
+			let animationId = null
+			function animate() {
+				animationId = requestAnimationFrame(animate)
+				drawConfetti()
+			}
+			animate()
+		}
+
+		function saveProgress() {
+			localStorage.setItem('triviaSections', JSON.stringify(sections))
+			localStorage.setItem('currentSectionIndex', currentSectionIndex)
+		}
+
+		// Function to clear progress and reset the page
+		function clearProgress() {
+			const modal = document.getElementById('confirmationModal');
+			modal.style.display = 'flex'; // Show the modal
+
+			// Handle confirmation
+			document.getElementById('confirmResetBtn').addEventListener('click', () => {
+				localStorage.removeItem('triviaSections');
+				localStorage.removeItem('currentSectionIndex');
+				location.reload();
+			});
+
+			// Handle cancellation
+			document.getElementById('cancelResetBtn').addEventListener('click', () => {
+				modal.style.display = 'none'; // Hide the modal
+			});
+		}
+
+		// Get references to the modal and buttons
+		const textInputButton = document.getElementById('textInputButton');
+		const textInputModal = document.getElementById('textInputModal');
+		const textInputArea = document.getElementById('textInputArea');
+		const continueTextInputBtn = document.getElementById('continueTextInputBtn');
+		const cancelTextInputBtn = document.getElementById('cancelTextInputBtn');
+
+		// Show the modal when the "Text Input" button is clicked
+		textInputButton.addEventListener('click', () => {
+			textInputModal.style.display = 'flex';
+		});
+
+		// Hide the modal when the "Cancel" button is clicked
+		cancelTextInputBtn.addEventListener('click', () => {
+			textInputModal.style.display = 'none';
+			textInputArea.value = ''; // Clear the text area
+		});
+
+		// Parse the questions when the "Continue" button is clicked
+		continueTextInputBtn.addEventListener('click', () => {
+			const text = textInputArea.value.trim();
+			if (text) {
+				parseFile(text); // Use the existing parseFile function
+				if (sections.length > 0) {
+					currentSectionIndex = 0;
+					instructionsContainer.style.display = 'none';
+					triviaContainer.style.display = 'block';
+					showSection(currentSectionIndex);
+					saveProgress();
+				} else {
+					alert('No valid sections found in the input.');
+				}
+			}
+			textInputModal.style.display = 'none';
+			textInputArea.value = ''; // Clear the text area
+		});
+	</script>
+</body>
+
+</html>
