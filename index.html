@@ -958,9 +958,34 @@
 				teamRows.appendChild(row);
 			});
 		}
+		function nextTeamName() {
+			const used = new Set(setupTeams.map(t => (t.name || '').trim().toLowerCase()));
+			// continue from the highest "Team X" letter in use (Team B -> Team C)
+			let highest = -1;
+			setupTeams.forEach(t => {
+				const m = (t.name || '').trim().match(/^Team ([A-Z])$/i);
+				if (m) highest = Math.max(highest, m[1].toUpperCase().charCodeAt(0) - 65);
+			});
+			for (let i = highest + 1; i < 26; i++) {
+				const candidate = 'Team ' + String.fromCharCode(65 + i);
+				if (!used.has(candidate.toLowerCase())) return candidate;
+			}
+			// past Z (or Z taken): wrap to first free letter, then numbers
+			for (let i = 0; i < 26; i++) {
+				const candidate = 'Team ' + String.fromCharCode(65 + i);
+				if (!used.has(candidate.toLowerCase())) return candidate;
+			}
+			let n = 27;
+			while (used.has(('team ' + n).toLowerCase())) n++;
+			return 'Team ' + n;
+		}
+		function nextTeamColor() {
+			const used = new Set(setupTeams.map(t => (t.color || '').toLowerCase()));
+			const free = PALETTE.find(c => !used.has(c.toLowerCase()));
+			return free || PALETTE[setupTeams.length % PALETTE.length];
+		}
 		addTeamBtn.addEventListener('click', () => {
-			const color = PALETTE[setupTeams.length % PALETTE.length];
-			setupTeams.push({ id: uid(), name: 'Team ' + String.fromCharCode(65 + setupTeams.length), color });
+			setupTeams.push({ id: uid(), name: nextTeamName(), color: nextTeamColor() });
 			renderTeamRows();
 		});
 		renderTeamRows();
@@ -1071,11 +1096,24 @@
 				alert('No valid sections found. Make sure at least one line starts with "#".');
 				return false;
 			}
-			state.teams = setupTeams.map((t, i) => ({
-				id: t.id,
-				name: (t.name || '').trim() || ('Team ' + String.fromCharCode(65 + i)),
-				color: t.color,
-			}));
+			// build final team list with guaranteed-unique names
+			const taken = new Set();
+			state.teams = setupTeams.map(t => {
+				let name = (t.name || '').trim();
+				if (!name) {
+					// fill blanks with the first free letter
+					for (let i = 0; i < 26; i++) {
+						const cand = 'Team ' + String.fromCharCode(65 + i);
+						if (!taken.has(cand.toLowerCase())) { name = cand; break; }
+					}
+					if (!name) name = 'Team ' + (taken.size + 1);
+				}
+				// de-duplicate manually typed names: "Tigers", "Tigers (2)", ...
+				let unique = name, n = 2;
+				while (taken.has(unique.toLowerCase())) unique = `${name} (${n++})`;
+				taken.add(unique.toLowerCase());
+				return { id: t.id, name: unique, color: t.color };
+			});
 			state.sections = sections;
 			state.currentSectionIndex = 0;
 			instructionsContainer.style.display = 'none';
